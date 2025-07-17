@@ -1,0 +1,37 @@
+.all-picks-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.all-picks-table th,
+.all-picks-table td {
+  border: 1px solid #999;
+  padding: 6px 12px;
+  text-align: left;
+}
+
+.all-picks-table th {
+  background-color: #f4f4f4;
+}
+
+/* ⭐ Style for gold star highlight */
+.all-picks-star {
+  color: gold;
+  font-size: 1.2em;
+  margin-left: 6px;
+  vertical-align: middle;
+  animation: sparkle 1.4s infinite alternate;
+}
+
+/* Sparkle animation */
+@keyframes sparkle {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.25);
+    opacity: 0.75;
+  }
+}

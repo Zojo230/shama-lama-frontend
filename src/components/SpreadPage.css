@@ -1,0 +1,12 @@
+.spread-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.spread-table th, .spread-table td {
+  border: 1px solid #aaa;
+  padding: 6px 10px;
+  text-align: center;
+}
+.spread-table th {
+  background-color: #eee;
+}

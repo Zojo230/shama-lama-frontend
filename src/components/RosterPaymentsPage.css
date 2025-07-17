@@ -1,0 +1,79 @@
+.roster-page {
+  text-align: center;
+  padding: 40px;
+  background: linear-gradient(to bottom, #d6f5d6, #b3e6b3);
+  min-height: 100vh;
+}
+
+.roster-title {
+  font-size: 2.2em;
+  font-weight: bold;
+  color: #004d00;
+  margin-bottom: 10px;
+}
+
+.roster-subtitle {
+  font-size: 1.2em;
+  margin-bottom: 30px;
+  color: #222;
+}
+
+.roster-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.player-card {
+  background-color: #379237;
+  color: white;
+  font-size: 1.2em;
+  font-weight: 500;
+  width: 350px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.player-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.payment-status {
+  font-size: 0.95em;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.payment-status::before {
+  content: '';
+}
+
+/* Color-coding the tag text */
+.payment-status:contains("Fully Paid") {
+  background-color: #007700;
+  color: #ffffff;
+}
+
+.payment-status:contains("Partially Paid") {
+  background-color: #f4c430;
+  color: #222;
+}
+
+.payment-status:contains("No Payment") {
+  background-color: #cc0000;
+  color: #ffffff;
+}

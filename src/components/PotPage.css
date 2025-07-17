@@ -1,0 +1,10 @@
+.pot-box {
+  background-color: #eaffea;
+  border: 1px solid #b3ffb3;
+  border-radius: 10px;
+  padding: 10px;
+  margin: 10px 0;
+  width: fit-content;
+  font-weight: bold;
+  font-size: 18px;
+}
