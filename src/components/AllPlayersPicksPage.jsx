@@ -8,24 +8,20 @@ const AllPlayersPicksPage = () => {
   const [totals, setTotals] = useState({});
   const [canReveal, setCanReveal] = useState(false);
 
-  useEffect(() => {
-    fetch('/data/current_week.json')
-      .then(res => res.json())
-      .then(data => setWeek(data.currentWeek || 1));
-  }, []);
+  const backendBase = 'https://pickem-backend-2025.onrender.com';
 
-  useEffect(() => {
-    fetch(`/data/picks_week_${week}.json`)
+  const loadData = (selectedWeek) => {
+    fetch(`${backendBase}/data/picks_week_${selectedWeek}.json`)
       .then(res => res.json())
       .then(data => setPlayers(data))
       .catch(() => setPlayers([]));
 
-    fetch(`/data/winners_week_${week}.json`)
+    fetch(`${backendBase}/data/winners_week_${selectedWeek}.json`)
       .then(res => res.json())
       .then(data => setWinners(data))
       .catch(() => setWinners([]));
 
-    fetch(`/data/totals.json`)
+    fetch(`${backendBase}/data/totals.json`)
       .then(res => res.json())
       .then(data => setTotals(data))
       .catch(() => setTotals({}));
@@ -36,6 +32,20 @@ const AllPlayersPicksPage = () => {
     deadline.setHours(13, 0, 0, 0); // 1:00 PM
     const isThursday = now.getDay() === 4;
     setCanReveal(!isThursday || now >= deadline);
+  };
+
+  useEffect(() => {
+    fetch(`${backendBase}/data/current_week.json`)
+      .then(res => res.json())
+      .then(data => {
+        const current = data.currentWeek || 1;
+        setWeek(current);
+        loadData(current);
+      });
+  }, []);
+
+  useEffect(() => {
+    loadData(week);
   }, [week]);
 
   const getWinner = (playerName) =>
@@ -45,13 +55,19 @@ const AllPlayersPicksPage = () => {
     <div className="page-container">
       <h2>All Players' Picks - Week {week}</h2>
 
-      <div>
+      <div style={{ marginBottom: '12px' }}>
         <label>Select Week: </label>
         <select value={week} onChange={e => setWeek(Number(e.target.value))}>
           {Array.from({ length: 14 }, (_, i) => i + 1).map(w => (
             <option key={w} value={w}>Week {w}</option>
           ))}
         </select>
+        <button
+          onClick={() => loadData(week)}
+          style={{ marginLeft: '10px', padding: '4px 10px', cursor: 'pointer' }}
+        >
+          🔄 Refresh
+        </button>
       </div>
 
       {!canReveal && (

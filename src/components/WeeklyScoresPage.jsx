@@ -3,9 +3,10 @@ import React, { useEffect, useState } from 'react';
 const WeeklyScoresPage = () => {
   const [week, setWeek] = useState(null);
   const [scores, setScores] = useState([]);
+  const backendBase = 'https://pickem-backend-2025.onrender.com';
 
   useEffect(() => {
-    fetch('/data/current_week.json')
+    fetch(`${backendBase}/data/current_week.json`)
       .then(res => res.json())
       .then(data => {
         const current = data.currentWeek || 1;
@@ -15,7 +16,7 @@ const WeeklyScoresPage = () => {
 
   useEffect(() => {
     if (!week) return;
-    fetch(`/data/scores_week_${week}.json`)
+    fetch(`${backendBase}/data/scores_week_${week}.json`)
       .then(res => res.json())
       .then(data => setScores(data));
   }, [week]);

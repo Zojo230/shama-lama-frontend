@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 
 const RulesPage = () => {
   const [rulesText, setRulesText] = useState('');
+  const backendBase = 'https://pickem-backend-2025.onrender.com';
 
   useEffect(() => {
-    fetch('/api/rules')
+    fetch(`${backendBase}/api/rules`)
       .then(res => res.json())
       .then(data => {
         if (data.rulesText) {

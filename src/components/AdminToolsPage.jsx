@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 function AdminToolsPage() {
@@ -11,7 +10,10 @@ function AdminToolsPage() {
     const formData = new FormData();
     formData.append('file', file);
 
-    fetch(endpoint, {
+    // 🔗 Updated to target your live backend
+    const fullUrl = `https://pickem-backend-2025.onrender.com${endpoint}`;
+
+    fetch(fullUrl, {
       method: 'POST',
       body: formData,
     })
@@ -48,3 +50,4 @@ function AdminToolsPage() {
 }
 
 export default AdminToolsPage;
+

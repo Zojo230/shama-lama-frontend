@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 
 const PlayerPicksPage = () => {
@@ -12,16 +11,24 @@ const PlayerPicksPage = () => {
   const [locked, setLocked] = useState(false);
   const [activated, setActivated] = useState(false);
 
+  const backendBase = 'https://pickem-backend-2025.onrender.com';
+
+  // 🛡️ Updated: Lockout occurs before Tuesday 1:00 PM and after Thursday 1:00 PM
   const evaluateLockout = () => {
     const now = new Date();
-    const deadline = new Date();
-    deadline.setHours(13, 0, 0, 0);
-    const isThursday = now.getDay() === 4;
-    return isThursday && now >= deadline;
+
+    const tuesday = new Date(now);
+    tuesday.setDate(now.getDate() + ((2 - now.getDay() + 7) % 7)); // next Tuesday
+    tuesday.setHours(13, 0, 0, 0);
+
+    const thursday = new Date(tuesday);
+    thursday.setDate(tuesday.getDate() + 2); // Thursday 1:00 PM
+
+    return now < tuesday || now >= thursday;
   };
 
   useEffect(() => {
-    fetch('/data/current_week.json')
+    fetch(`${backendBase}/data/current_week.json`)
       .then(res => res.json())
       .then(data => {
         setWeek(data.currentWeek || 1);
@@ -30,7 +37,7 @@ const PlayerPicksPage = () => {
   }, []);
 
   useEffect(() => {
-    fetch(`/data/games_week_${week}.json`)
+    fetch(`${backendBase}/data/games_week_${week}.json`)
       .then(res => res.json())
       .then(data => setGames(data))
       .catch(() => setGames([]));
@@ -52,7 +59,12 @@ const PlayerPicksPage = () => {
   };
 
   const handleLogin = () => {
-    fetch('/api/authenticate', {
+    if (locked) {
+      alert('⛔ Picks are not allowed outside Tuesday 1:00 PM – Thursday 1:00 PM CST.');
+      return;
+    }
+
+    fetch(`${backendBase}/api/authenticate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ gameName: playerName, pin })
@@ -63,14 +75,14 @@ const PlayerPicksPage = () => {
           setPicks([]);
           setGames([]);
 
-          fetch('/data/current_week.json')
+          fetch(`${backendBase}/data/current_week.json`)
             .then(res => res.json())
             .then(weekData => {
               const current = weekData.currentWeek || 1;
               setWeek(current);
               setLocked(evaluateLockout());
 
-              fetch('/api/check-player-picks', {
+              fetch(`${backendBase}/api/check-player-picks`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ week: current, playerName })
@@ -82,7 +94,7 @@ const PlayerPicksPage = () => {
                     return;
                   } else {
                     setAuthenticated(true);
-                    fetch(`/data/games_week_${current}.json`)
+                    fetch(`${backendBase}/data/games_week_${current}.json`)
                       .then(res => res.json())
                       .then(data => setGames(data))
                       .catch(() => setGames([]));
@@ -98,7 +110,7 @@ const PlayerPicksPage = () => {
   const handleSubmit = () => {
     if (locked) return;
     if (picks.length > 10) return alert('Max 10 picks allowed.');
-    fetch(`/submit-picks/${week}`, {
+    fetch(`${backendBase}/submit-picks/${week}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ player: playerName, pin, picks })
@@ -120,7 +132,7 @@ const PlayerPicksPage = () => {
     <div className="page-container">
       {locked ? (
         <p style={{ color: 'red', fontWeight: 'bold' }}>
-          🔒 Picks are now locked. You may return after the week ends to see results.
+          ⛔ Picks are only allowed between Tuesday 1:00 PM and Thursday 1:00 PM CST.
         </p>
       ) : submitSuccess ? (
         <>

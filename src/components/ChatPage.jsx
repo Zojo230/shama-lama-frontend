@@ -6,8 +6,10 @@ const ChatPage = () => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
 
+  const backendBase = 'https://pickem-backend-2025.onrender.com';
+
   const fetchMessages = () => {
-    fetch('/api/chat')
+    fetch(`${backendBase}/api/chat`)
       .then(res => res.json())
       .then(data => {
         setMessages(data.reverse()); // newest at bottom
@@ -23,7 +25,7 @@ const ChatPage = () => {
 
   const sendMessage = () => {
     if (!name || !message) return;
-    fetch('/api/chat', {
+    fetch(`${backendBase}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, message }),

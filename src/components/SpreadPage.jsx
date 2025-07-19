@@ -4,9 +4,10 @@ import './SpreadPage.css';
 const SpreadPage = () => {
   const [games, setGames] = useState([]);
   const [week, setWeek] = useState(null);
+  const backendBase = 'https://pickem-backend-2025.onrender.com';
 
   useEffect(() => {
-    fetch('/data/current_week.json')
+    fetch(`${backendBase}/data/current_week.json`)
       .then(res => res.json())
       .then(data => {
         const current = data.currentWeek || 1;
@@ -16,7 +17,7 @@ const SpreadPage = () => {
 
   useEffect(() => {
     if (!week) return;
-    fetch(`/data/games_week_${week}.json`)
+    fetch(`${backendBase}/data/games_week_${week}.json`)
       .then(res => res.json())
       .then(data => setGames(data));
   }, [week]);

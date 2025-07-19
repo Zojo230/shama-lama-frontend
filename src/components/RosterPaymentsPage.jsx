@@ -1,12 +1,12 @@
-
 import React, { useEffect, useState } from 'react';
 import './RosterPaymentsPage.css';
 
 function RosterPaymentsPage() {
   const [players, setPlayers] = useState([]);
+  const backendBase = 'https://pickem-backend-2025.onrender.com';
 
   useEffect(() => {
-    fetch('/data/roster.json')
+    fetch(`${backendBase}/data/roster.json`)
       .then((res) => res.json())
       .then((data) => {
         setPlayers(data);

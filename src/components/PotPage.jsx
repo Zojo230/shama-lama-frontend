@@ -6,12 +6,14 @@ const PotPage = () => {
   const [currentWeek, setCurrentWeek] = useState(1);
   const [playerCount, setPlayerCount] = useState(0);
 
+  const backendBase = 'https://pickem-backend-2025.onrender.com';
+
   useEffect(() => {
-    fetch('/data/current_week.json')
+    fetch(`${backendBase}/data/current_week.json`)
       .then(res => res.json())
       .then(data => setCurrentWeek(data.currentweek || 1));
 
-    fetch('/data/roster.json')
+    fetch(`${backendBase}/data/roster.json`)
       .then(res => res.json())
       .then(data => setPlayerCount(data.length || 0));
   }, []);
@@ -22,7 +24,7 @@ const PotPage = () => {
     let rolling = 0;
 
     const checkWeek = async (week) => {
-      const file = `/data/winners_week_${week}.json`;
+      const file = `${backendBase}/data/winners_week_${week}.json`;
       try {
         const res = await fetch(file);
         if (!res.ok) throw new Error('No file');
