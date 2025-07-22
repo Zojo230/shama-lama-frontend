@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+// Updated admin panel logic confirmed on July 22
 function AdminToolsPage() {
   const [gameScoresFile, setGameScoresFile] = useState(null);
   const [rosterFile, setRosterFile] = useState(null);
