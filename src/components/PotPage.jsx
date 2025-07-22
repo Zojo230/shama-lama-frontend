@@ -11,7 +11,7 @@ const PotPage = () => {
   useEffect(() => {
     fetch(`${backendBase}/data/current_week.json`)
       .then(res => res.json())
-      .then(data => setCurrentWeek(data.currentweek || 1));
+      .then(data => setCurrentWeek(data.currentWeek || 1)); // ✅ fixed key name
 
     fetch(`${backendBase}/data/roster.json`)
       .then(res => res.json())

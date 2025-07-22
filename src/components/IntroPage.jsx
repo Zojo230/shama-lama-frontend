@@ -10,7 +10,7 @@ function IntroPage() {
 
   const handleLogin = () => {
     if (
-      (username === 'Popcorn' && password === '&Peanuts!') ||
+      (username === 'Test' && password === 'Weareready') || // 🟢 TEMP TEST LOGIN
       (username === 'Admin' && password === 'letmein')
     ) {
       const route = username === 'Admin' ? '/admin-tools' : '/home';

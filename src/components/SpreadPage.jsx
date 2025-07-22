@@ -4,7 +4,9 @@ import './SpreadPage.css';
 const SpreadPage = () => {
   const [games, setGames] = useState([]);
   const [week, setWeek] = useState(null);
-  const backendBase = 'https://pickem-backend-2025.onrender.com';
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const backendBase = 'https://pickem-backend-2025.onrender.com'; // 🔄 use localhost if local
 
   useEffect(() => {
     fetch(`${backendBase}/data/current_week.json`)
@@ -12,19 +14,35 @@ const SpreadPage = () => {
       .then(data => {
         const current = data.currentWeek || 1;
         setWeek(current);
+      })
+      .catch(() => {
+        setError('Failed to load current week.');
+        setLoading(false);
       });
   }, []);
 
   useEffect(() => {
     if (!week) return;
+    setLoading(true);
     fetch(`${backendBase}/data/games_week_${week}.json`)
-      .then(res => res.json())
-      .then(data => setGames(data));
+      .then(res => {
+        if (!res.ok) throw new Error('File not found');
+        return res.json();
+      })
+      .then(data => {
+        setGames(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setGames([]);
+        setError(`No spread data available for Week ${week}.`);
+        setLoading(false);
+      });
   }, [week]);
 
   return (
     <div className="page-container">
-      <h2>Game Spread - Week {week}</h2>
+      <h2>Game Spread - Week {week ?? '?'}</h2>
 
       <div style={{ marginBottom: '12px' }}>
         <button onClick={() => window.print()} style={{ marginRight: '10px' }}>
@@ -35,30 +53,36 @@ const SpreadPage = () => {
         </button>
       </div>
 
-      <table className="spread-table">
-        <thead>
-          <tr>
-            <th>Date & Time</th>
-            <th>Team 1 (Home Team)</th>
-            <th>Spread</th>
-            <th>Team 2 (Visitor Team)</th>
-            <th>Spread</th>
-          </tr>
-        </thead>
-        <tbody>
-          {games.map((game, idx) => (
-            <tr key={idx}>
-              <td>{game.date || '-'}</td>
-              <td>{game.team1 || '-'}</td>
-              <td>{game.spread1 ?? '-'}</td>
-              <td>{game.team2 || '-'}</td>
-              <td>{game.spread2 ?? '-'}</td>
+      {loading && <p>Loading spread data...</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {!loading && games.length > 0 && (
+        <table className="spread-table">
+          <thead>
+            <tr>
+              <th>Date & Time</th>
+              <th>Team 1 (Home Team)</th>
+              <th>Spread</th>
+              <th>Team 2 (Visitor Team)</th>
+              <th>Spread</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {games.map((game, idx) => (
+              <tr key={idx}>
+                <td>{game.date || '-'}</td>
+                <td>{game.team1 || '-'}</td>
+                <td>{game.spread1 ?? '-'}</td>
+                <td>{game.team2 || '-'}</td>
+                <td>{game.spread2 ?? '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 };
 
 export default SpreadPage;
+
