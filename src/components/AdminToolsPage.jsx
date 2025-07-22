@@ -11,7 +11,7 @@ function AdminToolsPage() {
   const [debugWeek, setDebugWeek] = useState(null);
   const [debugFiles, setDebugFiles] = useState([]);
 
-  const backendBase = 'https://pickem-backend-2025.onrender.com'; // ✅ updated to live Render backend
+  const backendBase = 'https://pickem-backend-2025.onrender.com';
 
   useEffect(() => {
     const sessionFlag = sessionStorage.getItem('isAdmin');
