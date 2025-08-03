@@ -3,7 +3,12 @@ import './RosterPaymentsPage.css';
 
 function RosterPaymentsPage() {
   const [players, setPlayers] = useState([]);
-  const backendBase = 'https://pickem-backend-2025.onrender.com';
+
+  // ✅ Backend toggle for Netlify/Render
+  const backendBase =
+    window.location.hostname === 'localhost'
+      ? 'http://localhost:4000'
+      : 'https://pickem-backend-2025.onrender.com';
 
   useEffect(() => {
     fetch(`${backendBase}/data/roster.json`)
@@ -40,3 +45,4 @@ function RosterPaymentsPage() {
 }
 
 export default RosterPaymentsPage;
+

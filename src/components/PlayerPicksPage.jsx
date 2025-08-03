@@ -8,19 +8,22 @@ const PlayerPicksPage = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [picks, setPicks] = useState([]);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [locked, setLocked] = useState(false); // ← will always be false for now
+  const [locked, setLocked] = useState(false);
   const [activated, setActivated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const backendBase = 'https://pickem-backend-2025.onrender.com';
+  const backendBase =
+    window.location.hostname === 'localhost'
+      ? 'http://localhost:4000'
+      : 'https://pickem-backend-2025.onrender.com';
 
   useEffect(() => {
     fetch(`${backendBase}/data/current_week.json`)
       .then(res => res.json())
       .then(data => {
         setWeek(data.currentWeek || 1);
-        setLocked(false); // ← Lockout disabled for testing
+        setLocked(false);
       })
       .catch(() => {
         setWeek(1);
@@ -168,7 +171,33 @@ const PlayerPicksPage = () => {
       ) : (
         <>
           <h2>Place Your Picks - Week {week ?? '?'}</h2>
-          <p>You have selected {picks.length} of 10.</p>
+
+          {/* 📌 Sticky Pick Tally */}
+          <div style={{
+            position: 'sticky',
+            top: 64,
+            zIndex: 10,
+            backgroundColor: '#f9f9f9',
+            padding: '10px',
+            borderBottom: '1px solid #ccc',
+          }}>
+            <p style={{
+              margin: 0,
+              fontWeight: 'bold',
+              fontSize: '16px',
+              color: picks.length === 10 ? 'green' : picks.length > 10 ? 'red' : 'black'
+            }}>
+              You have selected {picks.length} out of 10 games.
+            </p>
+            <p style={{
+              margin: 0,
+              fontStyle: 'italic',
+              fontSize: '14px',
+              color: '#555'
+            }}>
+              Picks will be viewable after Thursday at 1:00pm. Submission is final!
+            </p>
+          </div>
 
           {loading && <p>Loading games...</p>}
           {error && <p style={{ color: 'red' }}>{error}</p>}

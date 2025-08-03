@@ -5,7 +5,11 @@ const WeeklyScoresPage = () => {
   const [scores, setScores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const backendBase = 'https://pickem-backend-2025.onrender.com'; // Change to localhost if needed
+
+  const backendBase =
+    window.location.hostname === 'localhost'
+      ? 'http://localhost:4000'
+      : 'https://pickem-backend-2025.onrender.com';
 
   useEffect(() => {
     fetch(`${backendBase}/data/current_week.json`)
@@ -48,7 +52,7 @@ const WeeklyScoresPage = () => {
 
       {!loading && scores.length > 0 && scores.map((game, index) => (
         <p key={index}>
-          {game["Team 1"]} ({game["Score 1"]}) vs {game["Team 2"]} ({game["Score 2"]})
+          {game.team1} ({game.score1}) vs {game.team2} ({game.score2})
         </p>
       ))}
 

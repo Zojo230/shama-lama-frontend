@@ -6,12 +6,16 @@ const PotPage = () => {
   const [currentWeek, setCurrentWeek] = useState(1);
   const [playerCount, setPlayerCount] = useState(0);
 
-  const backendBase = 'https://pickem-backend-2025.onrender.com';
+  // ✅ Netlify-compatible backend toggle
+  const backendBase =
+    window.location.hostname === 'localhost'
+      ? 'http://localhost:4000'
+      : 'https://pickem-backend-2025.onrender.com';
 
   useEffect(() => {
     fetch(`${backendBase}/data/current_week.json`)
       .then(res => res.json())
-      .then(data => setCurrentWeek(data.currentWeek || 1)); // ✅ fixed key name
+      .then(data => setCurrentWeek(data.currentWeek || 1));
 
     fetch(`${backendBase}/data/roster.json`)
       .then(res => res.json())

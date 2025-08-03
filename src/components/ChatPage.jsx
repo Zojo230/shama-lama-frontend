@@ -6,7 +6,11 @@ const ChatPage = () => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
 
-  const backendBase = 'https://pickem-backend-2025.onrender.com';
+  // 🔄 Detect local vs deployed
+  const backendBase =
+    window.location.hostname === 'localhost'
+      ? 'http://localhost:4000'
+      : 'https://pickem-backend-2025.onrender.com';
 
   const fetchMessages = () => {
     fetch(`${backendBase}/api/chat`)

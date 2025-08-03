@@ -10,6 +10,7 @@ import AdminToolsPage from './components/AdminToolsPage';
 import RulesPage from './components/RulesPage';
 import ChatPage from './components/ChatPage';
 import PotPage from './components/PotPage';
+import LeaderboardPage from './components/LeaderboardPage'; // ✅ NEW
 import Layout from './components/Layout';
 
 function App() {
@@ -18,7 +19,6 @@ function App() {
       <Routes>
         <Route path="/" element={<IntroPage />} />
 
-        {/* NEW: Default blank page after login */}
         <Route
           path="/home"
           element={
@@ -100,12 +100,21 @@ function App() {
             </Layout>
           }
         />
+        <Route
+          path="/leaderboard"
+          element={
+            <Layout>
+              <LeaderboardPage />
+            </Layout>
+          }
+        />
       </Routes>
     </Router>
   );
 }
 
 export default App;
+
 
 
 

@@ -6,7 +6,11 @@ const SpreadPage = () => {
   const [week, setWeek] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const backendBase = 'https://pickem-backend-2025.onrender.com'; // 🔄 use localhost if local
+
+  const backendBase =
+    window.location.hostname === 'localhost'
+      ? 'http://localhost:4000'
+      : 'https://pickem-backend-2025.onrender.com';
 
   useEffect(() => {
     fetch(`${backendBase}/data/current_week.json`)
@@ -85,4 +89,3 @@ const SpreadPage = () => {
 };
 
 export default SpreadPage;
-

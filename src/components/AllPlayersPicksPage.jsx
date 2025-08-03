@@ -10,7 +10,11 @@ const AllPlayersPicksPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const backendBase = 'https://pickem-backend-2025.onrender.com';
+  // 🔄 Auto-switch between local and deployed backend
+  const backendBase =
+    window.location.hostname === 'localhost'
+      ? 'http://localhost:4000'
+      : 'https://pickem-backend-2025.onrender.com';
 
   const loadData = (selectedWeek) => {
     setLoading(true);

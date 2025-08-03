@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-// Updated admin panel logic confirmed on July 22
+
+// Updated for Netlify Deployment
 function AdminToolsPage() {
   const [gameScoresFile, setGameScoresFile] = useState(null);
   const [rosterFile, setRosterFile] = useState(null);
@@ -11,7 +12,10 @@ function AdminToolsPage() {
   const [debugWeek, setDebugWeek] = useState(null);
   const [debugFiles, setDebugFiles] = useState([]);
 
-  const backendBase = 'https://pickem-backend-2025.onrender.com';
+  // 🔄 Deployment-ready: auto-detect Netlify/Render or local
+  const backendBase = window.location.hostname === 'localhost'
+    ? 'http://localhost:4000'
+    : 'https://pickem-backend-2025.onrender.com';
 
   useEffect(() => {
     const sessionFlag = sessionStorage.getItem('isAdmin');
@@ -107,7 +111,8 @@ function AdminToolsPage() {
       setDebugFiles([]);
     }
   };
-
+  
+// eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (isAdmin) fetchDebugFiles();
   }, [isAdmin]);
@@ -182,7 +187,6 @@ function AdminToolsPage() {
             </button>
           </div>
 
-          {/* 🧠 Debug Panel */}
           <div style={{ marginTop: '40px', borderTop: '1px solid #ccc', paddingTop: '20px' }}>
             <h3 style={{ marginBottom: '10px' }}>🛠 Debug Panel</h3>
             <button onClick={fetchDebugFiles} style={{ marginBottom: '10px' }}>
