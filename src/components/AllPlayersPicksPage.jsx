@@ -1,173 +1,260 @@
-import React, { useEffect, useState } from 'react';
-import './AllPlayersPicksPage.css';
+import React, { useState, useEffect } from "react";
 
 const AllPlayersPicksPage = () => {
-  const [week, setWeek] = useState(null);
-  const [players, setPlayers] = useState([]);
-  const [winners, setWinners] = useState([]);
-  const [totals, setTotals] = useState({});
+  const [week, setWeek] = useState(1);
+  const [availableWeeks, setAvailableWeeks] = useState([]);
+  const [picksData, setPicksData] = useState([]);
+  const [winnersData, setWinnersData] = useState([]);
+  const [totalsData, setTotalsData] = useState({});
   const [canReveal, setCanReveal] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  // 🔄 Auto-switch between local and deployed backend
+  // NEW: status line
+  const [visibilityMode, setVisibilityMode] = useState("auto");
+  const [visibilityNote, setVisibilityNote] = useState("");
+
+  // IMPORTANT: use the same backend base as Admin Tools
   const backendBase =
-    window.location.hostname === 'localhost'
-      ? 'http://localhost:4000'
-      : 'https://pickem-backend-2025.onrender.com';
+    process.env.REACT_APP_API_BASE_URL ||
+    process.env.REACT_APP_API_URL ||
+    (typeof window !== "undefined" && window.location.hostname === "localhost"
+      ? "http://localhost:5001"
+      : "https://pickem-backend-2025.onrender.com");
 
-  const loadData = (selectedWeek) => {
-    setLoading(true);
-    setError(null);
+  // Fetch available weeks based on picks files
+  useEffect(() => {
+    const fetchWeeks = async () => {
+      try {
+        const res = await fetch(`${backendBase}/api/debug/files`, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          const foundWeeks = data.files
+            .filter((f) => f.name.startsWith("picks_week_"))
+            .map((f) => parseInt(f.name.replace("picks_week_", "").replace(".json", ""), 10))
+            .sort((a, b) => a - b);
+          setAvailableWeeks(foundWeeks);
+          if (foundWeeks.length > 0) setWeek(foundWeeks[foundWeeks.length - 1]);
+        }
+      } catch (err) {
+        console.error("Error fetching weeks:", err);
+      }
+    };
+    fetchWeeks();
+  }, [backendBase]);
 
-    fetch(`${backendBase}/data/picks_week_${selectedWeek}.json`)
-      .then(res => {
-        if (!res.ok) throw new Error('No picks found');
-        return res.json();
-      })
-      .then(data => setPlayers(data))
-      .catch(() => {
-        setPlayers([]);
-        setError('No picks data available for this week.');
-      });
+  // Fetch visibility + picks + winners + totals for the selected week
+  useEffect(() => {
+    if (!week) return;
 
-    fetch(`${backendBase}/data/winners_week_${selectedWeek}.json`)
-      .then(res => {
-        if (!res.ok) throw new Error('No winners found');
-        return res.json();
-      })
-      .then(data => setWinners(data))
-      .catch(() => setWinners([]));
+    const fetchAll = async () => {
+      setLoading(true);
+      try {
+        // --- Visibility (admin-controlled) ---
+        let reveal = false;
+        let mode = "auto";
+        let note = "";
 
-    fetch(`${backendBase}/data/totals.json`)
-      .then(res => res.json())
-      .then(data => setTotals(data))
-      .catch(() => setTotals({}));
+        try {
+          const r = await fetch(`${backendBase}/api/picks-visibility`, { cache: "no-store" });
+          if (r.ok) {
+            const j = await r.json();
+            mode = String(j.mode || j.value || "auto").toLowerCase();
 
-    // Lockout logic: Picks are hidden until Thursday at 1:00pm CST
-    const now = new Date();
-    const deadline = new Date();
-    deadline.setHours(13, 0, 0, 0); // 1:00 PM
-    const isThursday = now.getDay() === 4;
-    setCanReveal(!isThursday || now >= deadline);
+            if (mode === "on") {
+              reveal = true;
+              note = "Admin override: visible now";
+            } else if (mode === "off") {
+              reveal = false;
+              note = "Admin override: hidden";
+            } else {
+              // auto — use server’s computed flag if present; else legacy lock-status
+              if (typeof j.revealNow === "boolean") {
+                reveal = j.revealNow;
+              } else {
+                try {
+                  const res = await fetch(`${backendBase}/api/lock-status?week=${week}`, { cache: "no-store" });
+                  const jj = res.ok ? await res.json() : { revealPicks: false };
+                  reveal = Boolean(jj.revealPicks);
+                } catch {
+                  reveal = false;
+                }
+              }
+              note = "Auto schedule (Thu 1:00 PM CT)";
+            }
+          } else {
+            // total fallback if endpoint missing
+            try {
+              const res = await fetch(`${backendBase}/api/lock-status?week=${week}`, { cache: "no-store" });
+              const jj = res.ok ? await res.json() : { revealPicks: false };
+              reveal = Boolean(jj.revealPicks);
+              mode = "auto";
+              note = "Auto schedule (legacy)";
+            } catch {
+              reveal = false;
+              mode = "auto";
+              note = "Auto schedule (legacy)";
+            }
+          }
+        } catch {
+          reveal = false;
+          mode = "auto";
+          note = "Auto schedule (legacy)";
+        }
 
-    setLoading(false);
+        setVisibilityMode(mode);
+        setVisibilityNote(note);
+        setCanReveal(reveal);
+
+        // --- Picks (obeys visibility on backend) ---
+        try {
+          const res = await fetch(`${backendBase}/api/picks_week_${week}.json`, { cache: "no-store" });
+          if (res.ok) {
+            const data = await res.json();
+            setPicksData(Array.isArray(data) ? data : []);
+          } else {
+            setPicksData([]);
+          }
+        } catch {
+          setPicksData([]);
+        }
+
+        // --- Winners detail (for ✓/✗ and weekly points) ---
+        try {
+          const res = await fetch(`${backendBase}/data/winners_detail_week_${week}.json`, { cache: "no-store" });
+          if (res.ok) {
+            const data = await res.json();
+            setWinnersData(Array.isArray(data) ? data : []);
+          } else {
+            setWinnersData([]);
+          }
+        } catch {
+          setWinnersData([]);
+        }
+
+        // --- Totals (cumulative points) ---
+        try {
+          const res = await fetch(`${backendBase}/data/totals.json`, { cache: "no-store" });
+          if (res.ok) {
+            const data = await res.json();
+            setTotalsData(data || {});
+          } else {
+            setTotalsData({});
+          }
+        } catch {
+          setTotalsData({});
+        }
+      } catch (err) {
+        console.error("Error fetching picks/winners/totals:", err);
+      }
+      setLoading(false);
+    };
+
+    fetchAll();
+  }, [week, backendBase]);
+
+  const getWinnerForGame = (gameIndex) => {
+    if (!winnersData || winnersData.length === 0) return null;
+    const g = winnersData[gameIndex];
+    if (!g) return null;
+    return g.winner || null;
   };
 
-  useEffect(() => {
-    fetch(`${backendBase}/data/current_week.json`)
-      .then(res => res.json())
-      .then(data => {
-        const current = data.currentWeek || 1;
-        setWeek(current);
-        loadData(current);
-      })
-      .catch(() => {
-        setWeek(1);
-        loadData(1);
-      });
-  }, []);
-
-  useEffect(() => {
-    if (week !== null) {
-      loadData(week);
-    }
-  }, [week]);
-
-  const getWinner = (playerName) =>
-    winners.find(w => w.player?.toLowerCase() === playerName?.toLowerCase()) || { correct: [], total: 0 };
+  const getWeeklyScoreForPlayer = (playerName) => {
+    if (!picksData || picksData.length === 0) return 0;
+    return picksData
+      .filter((p) => p.player === playerName)
+      .flatMap((p) => p.picks)
+      .reduce((acc, pick) => {
+        const winner = getWinnerForGame(pick.gameIndex);
+        return acc + (winner && pick.pick === winner ? 1 : 0);
+      }, 0);
+  };
 
   return (
-    <div className="page-container">
-      <h2>All Players' Picks - Week {week ?? '?'}</h2>
+    <div className="p-4">
+      <h2 className="text-xl font-bold mb-1">All Players' Picks</h2>
 
-      <div style={{ marginBottom: '12px' }}>
-        <label>Select Week: </label>
-        <select value={week || 1} onChange={e => setWeek(Number(e.target.value))}>
-          {Array.from({ length: 14 }, (_, i) => i + 1).map(w => (
-            <option key={w} value={w}>Week {w}</option>
-          ))}
-        </select>
-        <button
-          onClick={() => loadData(week)}
-          style={{ marginLeft: '10px', padding: '4px 10px', cursor: 'pointer' }}
-        >
-          🔄 Refresh
-        </button>
+      <div className="text-sm text-gray-600 mb-3">
+        Visibility:&nbsp;
+        <span className="font-semibold uppercase">{visibilityMode}</span>
+        {visibilityNote ? <> — {visibilityNote}</> : null}
       </div>
 
-      {!canReveal && (
-        <p style={{ color: 'red', marginTop: '10px', fontWeight: 'bold' }}>
-          ⛔ Picks are hidden until Thursday at 1:00pm CST.
-        </p>
+      {availableWeeks.length > 0 && (
+        <div className="mb-4">
+          <label className="mr-2">Select Week:</label>
+          <select
+            value={week}
+            onChange={(e) => setWeek(Number(e.target.value))}
+            className="border p-2"
+          >
+            {availableWeeks.map((w) => (
+              <option key={w} value={w}>
+                Week {w}
+              </option>
+            ))}
+          </select>
+        </div>
       )}
 
-      {loading && <p>Loading picks...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      {!loading && players.length > 0 && (
-        <table className="all-picks-table">
+      {loading ? (
+        <p>Loading...</p>
+      ) : !canReveal ? (
+        <p className="text-red-600">
+          {visibilityMode === "off"
+            ? "Picks are hidden by Admin."
+            : "Picks are hidden (Auto schedule)."}
+        </p>
+      ) : (
+        <table className="min-w-full border">
           <thead>
             <tr>
-              <th>Game Name</th>
-              <th>Picks</th>
-              <th>Winning Picks</th>
-              <th>Weekly Points</th>
-              <th>Cumulative</th>
+              <th className="border px-2 py-1">Player</th>
+              <th className="border px-2 py-1">Picks</th>
+              <th className="border px-2 py-1">Correct Picks</th>
+              <th className="border px-2 py-1">Weekly Points</th>
+              <th className="border px-2 py-1">Cumulative Points</th>
             </tr>
           </thead>
           <tbody>
-            {players.map(player => {
-              const winData = getWinner(player.player);
+            {picksData.map((player, idx) => {
+              const weeklyScore = getWeeklyScoreForPlayer(player.player);
+              const cumulativeScore = totalsData[player.player] || 0;
+
               return (
-                <tr key={player.player}>
-                  <td>{player.player}</td>
-                  <td>
-                    {canReveal
-                      ? player.picks.map((p, idx) => {
-                          const isCorrect = winData.correct.includes(p.pick);
-                          return (
-                            <span
-                              key={idx}
-                              style={{
-                                color: isCorrect ? 'green' : 'black',
-                                fontWeight: isCorrect ? 'bold' : 'normal',
-                                marginRight: '6px'
-                              }}
-                            >
-                              {p.pick}
-                            </span>
-                          );
-                        })
-                      : '—'}
+                <tr key={idx}>
+                  <td className="border px-2 py-1">{player.player}</td>
+                  <td className="border px-2 py-1">
+                    {player.picks.map((p, i) => (
+                      <div key={i}>{p.pick}</div>
+                    ))}
                   </td>
-                  <td>{canReveal ? winData.correct.join(', ') || 'None' : '—'}</td>
-                  <td>
-                    {canReveal ? (
-                      <>
-                        {winData.total}
-                        {winData.total >= 9 && (
-                          <span title="Great job! You nailed it!" className="all-picks-star">
-                            ⭐
-                          </span>
-                        )}
-                      </>
-                    ) : '—'}
+                  <td className="border px-2 py-1">
+                    {player.picks.map((p, i) => {
+                      const winner = getWinnerForGame(p.gameIndex);
+                      const isCorrect = winner && p.pick === winner;
+                      return (
+                        <div
+                          key={i}
+                          className={isCorrect ? "text-green-600" : "text-red-600"}
+                        >
+                          {winner ? (isCorrect ? "✓" : "✗") : "-"}
+                        </div>
+                      );
+                    })}
                   </td>
-                  <td>{canReveal ? totals[player.player] || 0 : '—'}</td>
+                  <td className="border px-2 py-1 text-center">{weeklyScore}</td>
+                  <td className="border px-2 py-1 text-center">{cumulativeScore}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       )}
-
-      {!loading && players.length === 0 && !error && (
-        <p style={{ color: 'gray' }}>No pick data available for this week.</p>
-      )}
     </div>
   );
 };
 
 export default AllPlayersPicksPage;
+
 
