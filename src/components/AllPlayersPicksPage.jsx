@@ -6,15 +6,13 @@ const AllPlayersPicksPage = () => {
   const [picksData, setPicksData] = useState([]);
   const [winnersData, setWinnersData] = useState([]);
   const [totalsData, setTotalsData] = useState({});
-  const [gamesData, setGamesData] = useState([]); // NEW: games for spreads
+  const [gamesData, setGamesData] = useState([]);
   const [canReveal, setCanReveal] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // status line
   const [visibilityMode, setVisibilityMode] = useState("auto");
   const [visibilityNote, setVisibilityNote] = useState("");
 
-  // IMPORTANT: same base as Admin Tools
   const backendBase =
     process.env.REACT_APP_API_BASE_URL ||
     process.env.REACT_APP_API_URL ||
@@ -22,7 +20,6 @@ const AllPlayersPicksPage = () => {
       ? "http://localhost:5001"
       : "https://pickem-backend-2025.onrender.com");
 
-  // Simple table styles
   const styles = {
     table: { width: "100%", borderCollapse: "collapse", marginTop: 10 },
     th: {
@@ -39,7 +36,6 @@ const AllPlayersPicksPage = () => {
     status: { fontSize: 14, color: "#555", marginBottom: 8 },
   };
 
-  // Fetch available weeks from picks files
   useEffect(() => {
     const fetchWeeks = async () => {
       try {
@@ -60,7 +56,6 @@ const AllPlayersPicksPage = () => {
     fetchWeeks();
   }, [backendBase]);
 
-  // Fetch visibility + games + picks + winners + totals
   useEffect(() => {
     if (!week) return;
 
@@ -78,48 +73,30 @@ const AllPlayersPicksPage = () => {
             const j = await r.json();
             mode = String(j.mode || j.value || "auto").toLowerCase();
             if (mode === "on") {
-              reveal = true;
-              note = "Admin override: visible now";
+              reveal = true; note = "Admin override: visible now";
             } else if (mode === "off") {
-              reveal = false;
-              note = "Admin override: hidden";
+              reveal = false; note = "Admin override: hidden";
             } else {
               if (typeof j.revealNow === "boolean") {
                 reveal = j.revealNow;
               } else {
                 try {
-                  const res = await fetch(`${backendBase}/api/lock-status?week=${week}`, {
-                    cache: "no-store",
-                  });
+                  const res = await fetch(`${backendBase}/api/lock-status?week=${week}`, { cache: "no-store" });
                   const jj = res.ok ? await res.json() : { revealPicks: false };
                   reveal = Boolean(jj.revealPicks);
-                } catch {
-                  reveal = false;
-                }
+                } catch { reveal = false; }
               }
               note = "Auto schedule (Thu 1:00 PM CT)";
             }
           } else {
-            // legacy fallback
             try {
-              const res = await fetch(`${backendBase}/api/lock-status?week=${week}`, {
-                cache: "no-store",
-              });
+              const res = await fetch(`${backendBase}/api/lock-status?week=${week}`, { cache: "no-store" });
               const jj = res.ok ? await res.json() : { revealPicks: false };
               reveal = Boolean(jj.revealPicks);
-              mode = "auto";
-              note = "Auto schedule (legacy)";
-            } catch {
-              reveal = false;
-              mode = "auto";
-              note = "Auto schedule (legacy)";
-            }
+              mode = "auto"; note = "Auto schedule (legacy)";
+            } catch { reveal = false; mode = "auto"; note = "Auto schedule (legacy)"; }
           }
-        } catch {
-          reveal = false;
-          mode = "auto";
-          note = "Auto schedule (legacy)";
-        }
+        } catch { reveal = false; mode = "auto"; note = "Auto schedule (legacy)"; }
 
         setVisibilityMode(mode);
         setVisibilityNote(note);
@@ -127,43 +104,27 @@ const AllPlayersPicksPage = () => {
 
         // Games (for spreads)
         try {
-          const res = await fetch(`${backendBase}/data/games_week_${week}.json`, {
-            cache: "no-store",
-          });
+          const res = await fetch(`${backendBase}/data/games_week_${week}.json`, { cache: "no-store" });
           setGamesData(res.ok ? (await res.json()) : []);
-        } catch {
-          setGamesData([]);
-        }
+        } catch { setGamesData([]); }
 
         // Picks (backend enforces visibility)
         try {
-          const res = await fetch(`${backendBase}/api/picks_week_${week}.json`, {
-            cache: "no-store",
-          });
+          const res = await fetch(`${backendBase}/api/picks_week_${week}.json`, { cache: "no-store" });
           setPicksData(res.ok ? (await res.json()) : []);
-        } catch {
-          setPicksData([]);
-        }
+        } catch { setPicksData([]); }
 
         // Winners detail
         try {
-          const res = await fetch(`${backendBase}/data/winners_detail_week_${week}.json`, {
-            cache: "no-store",
-          });
+          const res = await fetch(`${backendBase}/data/winners_detail_week_${week}.json`, { cache: "no-store" });
           setWinnersData(res.ok ? (await res.json()) : []);
-        } catch {
-          setWinnersData([]);
-        }
+        } catch { setWinnersData([]); }
 
         // Totals
         try {
-          const res = await fetch(`${backendBase}/data/totals.json`, {
-            cache: "no-store",
-          });
+          const res = await fetch(`${backendBase}/data/totals.json`, { cache: "no-store" });
           setTotalsData(res.ok ? (await res.json()) : {});
-        } catch {
-          setTotalsData({});
-        }
+        } catch { setTotalsData({}); }
       } catch (err) {
         console.error("Error fetching picks/winners/totals:", err);
       }
@@ -173,7 +134,6 @@ const AllPlayersPicksPage = () => {
     fetchAll();
   }, [week, backendBase]);
 
-  // Helpers
   const getWinnerForGame = (gameIndex) => {
     if (!Array.isArray(winnersData) || winnersData.length === 0) return null;
     const g = winnersData[gameIndex];
@@ -198,25 +158,53 @@ const AllPlayersPicksPage = () => {
     return `${weekly} / ${total}`;
   };
 
-  // NEW: pick label with spread "(±X.X)"
+  // Robust name normalizer for fallback matches
+  const norm = (s) =>
+    String(s || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  // NEW: spread label — respects 1-based *team* index; falls back to name match
   const labelWithSpread = (pickObj) => {
-    const g = Array.isArray(gamesData) ? gamesData[pickObj?.gameIndex] : null;
+    if (!pickObj || !pickObj.pick) return "";
+
+    const teamIdx = Number(pickObj.gameIndex);
     let spread = null;
-    if (g) {
-      if (pickObj.pick === g.team1) spread = g.spread1;
-      else if (pickObj.pick === g.team2) spread = g.spread2;
-    } else if (Array.isArray(gamesData) && gamesData.length) {
-      // fallback by team name if index not aligned
-      const match = gamesData.find((gg) => gg.team1 === pickObj.pick || gg.team2 === pickObj.pick);
-      if (match) spread = match.team1 === pickObj.pick ? match.spread1 : match.spread2;
+
+    // Attempt 1: map team index -> game index + slot
+    if (Number.isFinite(teamIdx) && teamIdx > 0 && Array.isArray(gamesData) && gamesData.length) {
+      const gameIdx = Math.ceil(teamIdx / 2) - 1;          // 1,2 -> 0; 3,4 -> 1; ...
+      const isTeam1 = teamIdx % 2 === 1;                   // odd -> team1, even -> team2
+      const g = gamesData[gameIdx];
+
+      if (g) {
+        const nameOnSlot = isTeam1 ? g.team1 : g.team2;
+        const spreadOnSlot = isTeam1 ? g.spread1 : g.spread2;
+        if (norm(nameOnSlot) === norm(pickObj.pick)) {
+          spread = Number(spreadOnSlot);
+        }
+      }
     }
+
+    // Attempt 2: fallback by team name anywhere in the games list
+    if (spread == null && Array.isArray(gamesData) && gamesData.length) {
+      const match = gamesData.find(
+        (gg) => norm(gg.team1) === norm(pickObj.pick) || norm(gg.team2) === norm(pickObj.pick)
+      );
+      if (match) {
+        spread =
+          norm(match.team1) === norm(pickObj.pick)
+            ? Number(match.spread1)
+            : Number(match.spread2);
+      }
+    }
+
     const fmt = (n) =>
-      typeof n === "number" && !Number.isNaN(n)
-        ? (n > 0 ? `+${n}` : `${n}`)
-        : "";
-    return spread === null || spread === undefined || Number.isNaN(Number(spread))
-      ? pickObj.pick
-      : `${pickObj.pick} (${fmt(Number(spread))})`;
+      typeof n === "number" && !Number.isNaN(n) ? (n > 0 ? `+${n}` : `${n}`) : "";
+
+    return spread == null ? pickObj.pick : `${pickObj.pick} (${fmt(spread)})`;
   };
 
   return (
